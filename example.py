@@ -4,6 +4,11 @@ import plivo
 app = Flask(__name__)
 
 
+@app.route('/', methods=['GET'])
+def index():
+    return ""
+
+
 @app.route('/response/sip/route/', methods=['GET', 'POST'])
 def response_sip_route():
     if request.method == 'GET':

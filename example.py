@@ -11,6 +11,7 @@ def index():
 
 @app.route('/response/sip/route/', methods=['GET', 'POST'])
 def response_sip_route():
+    print(request.args)
     if request.method == 'GET':
         to_number = request.args.get('To', None)
         from_number = request.args.get('CLID', None)

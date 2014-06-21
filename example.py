@@ -58,7 +58,7 @@ def makeAgentAvailable(agentId):
     if callId is not None:
         params = {
             'call_uuid': callId,
-            'transfer_url': call_transfer_url_templ % agentId
+            'aleg_url': call_transfer_url_templ % agentId
         }
         response = plivo_rest.transfer_call(params)
         print (response)

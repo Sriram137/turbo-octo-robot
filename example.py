@@ -1,12 +1,12 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, render_template
 import plivo
 
 app = Flask(__name__)
 
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    return ""
+    return render_template("web_taker.html")
 
 
 @app.route('/response/sip/route/', methods=['GET', 'POST'])
@@ -41,10 +41,12 @@ def response_sip_route():
         # else:
             # response.addDial().addNumber(to_number)
 
+    print(response.to_xml())
     response = make_response(response.to_xml())
     response.headers['Content-Type'] = 'text/xml'
 
     return response
 
 if __name__ == '__main__':
+    app.debug = True
     app.run(host='0.0.0.0')

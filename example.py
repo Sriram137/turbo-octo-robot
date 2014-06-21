@@ -67,12 +67,16 @@ def makeAgentAvailable(agentId):
     return ""
 
 
-@app.route('/transfer/<agentId>')
+@app.route('/transfer/<agentId>', methods=['POST'])
 def handle_transer(agentId):
-    print ("TRANSER REQUEST RECIEVED", agentId)
-    agentSip = "sip:%s@phone.plivo.com" % agentId
-    plivo_response = plivo.addDial().addUser(agentSip)
-    return make_http_response(plivo_response)
+    try:
+        print ("TRANSER REQUEST RECIEVED", agentId)
+        agentSip = "sip:%s@phone.plivo.com" % agentId
+        plivo_response = plivo.XML.Response()
+        plivo_response.addDial().addUser(agentSip)
+        return make_http_response(plivo_response)
+    except Exception as e:
+        print e
 
 
 @app.route('/response/sip/route/', methods=['POST'])

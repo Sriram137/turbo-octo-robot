@@ -5,8 +5,11 @@ import redis
 
 
 app = Flask(__name__)
-
+auth_id = "MAN2QYMDI4NGJKOTFMNG"
+auth_token = "MjQ5ZjI1NDZjM2JiYjU2MGMyNDc4MmEzZWY4MzM3"
 music_file = "https://s3.amazonaws.com/plivocloud/Trumpet.mp3"
+plivo_rest = plivo.RestAPI(auth_id, auth_token)
+call_transfer_url_templ = "http://shrouded-lake-4745.herokuapp.com/transfer/%s"
 
 
 def get_db():
@@ -35,7 +38,7 @@ def addAvailableAgent(agentId):
     get_db().sadd("agentPool", agentId)
 
 
-def getPendingCall(callId):
+def getPendingCall():
     return get_db().lpop("callList")
 
 
@@ -47,18 +50,25 @@ def assignCall(callId, agentId):
     get_db().set(callId, agentId)
 
 
-# def getAgentIdForCall(callId):
-#     return g.redis_server.get(callId)
-
-
-# def deleteCallDetails(callId):
-#     g.redis_server.delete(callId)
-
-
 @app.route('/agent/<agentId>')
 def makeAgentAvailable(agentId):
-    addAvailableAgent(agentId)
+    callId = getPendingCall()
+    if callId is not None:
+        params = {
+            'call_uuid': callId,
+            'transfer_url': call_transfer_url_templ % agentId
+        }
+        plivo_rest.transfer_call(params)
+    else:
+        addAvailableAgent(agentId)
     return ""
+
+
+@app.route('/transfer/<agentId>')
+def handle_transer(agentId):
+    agentSip = "sip:%s@phone.plivo.com" % agentId
+    plivo_response = plivo.addDial().addUser(agentSip)
+    return make_http_response(plivo_response)
 
 
 @app.route('/response/sip/route/', methods=['POST'])
@@ -84,19 +94,23 @@ def response_sip_route():
         if agentId is not None:
             agentSip = "sip:%s@phone.plivo.com" % agentId
             print ("agentSip", agentSip)
-            # assignCall(callUUID, agentId)
             print("Assigning call")
             plivo_response.addDial(callerName=caller_name).addUser(agentSip)
         else:
             addPendingCall(callUUID)
             plivo_response.addPlay(music_file, loop=0)
-        print(plivo_response.to_xml())
-        response = make_response(plivo_response.to_xml())
-        response.headers['Content-Type'] = 'text/xml'
+        return make_http_response(plivo_response)
 
-        return response
     except Exception as e:
         print e
+
+
+def make_http_response(plivo_response):
+    print(plivo_response.to_xml())
+    response = make_response(plivo_response.to_xml())
+    response.headers['Content-Type'] = 'text/xml'
+
+    return response
 
 
 @app.route('/response/sip/hangup/', methods=['POST'])
@@ -114,7 +128,7 @@ def response_sip_hangup():
 
     #agentId = getAgentIdForCall(callUUID)
     #deleteCallDetails(callId)
-    return
+    return ""
 
 if __name__ == '__main__':
     app.debug = True

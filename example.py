@@ -34,7 +34,7 @@ def response_sip_route():
         return make_response('Method not allowed.')
 
     print("Second level")
-    response = plivo.Response()
+    response = plivo.XML.Response()
     print("third level")
     to_number = "sip:elricl140620163139@phone.plivo.com"
     print("4 level")

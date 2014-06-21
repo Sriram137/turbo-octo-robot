@@ -79,9 +79,12 @@ def response_sip_route():
 
     agentId = getFreeAgent()
 
-    if agentId:
+    print("Agent Id", agentId)
+    if agentId is not None:
         agentSip = "sip:%s@phone.plivo.com" % agentId
+        print ("agentSip", agentSip)
         # assignCall(callUUID, agentId)
+        print("Assigning call")
         plivo_response.addDial(caller_name=caller_name).addUser(agentSip)
     else:
         addPendingCall(callUUID)

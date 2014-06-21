@@ -43,6 +43,7 @@ def getPendingCall():
 
 
 def addPendingCall(callId):
+    print ("INSERTINGcccc", callId)
     get_db().rpush("callList", callId)
 
 
@@ -53,12 +54,14 @@ def assignCall(callId, agentId):
 @app.route('/agent/<agentId>')
 def makeAgentAvailable(agentId):
     callId = getPendingCall()
+    print (callId)
     if callId is not None:
         params = {
             'call_uuid': callId,
             'transfer_url': call_transfer_url_templ % agentId
         }
-        plivo_rest.transfer_call(params)
+        response = plivo_rest.transfer_call(params)
+        print (response)
     else:
         addAvailableAgent(agentId)
     return ""
@@ -66,6 +69,7 @@ def makeAgentAvailable(agentId):
 
 @app.route('/transfer/<agentId>')
 def handle_transer(agentId):
+    print ("TRANSER REQUEST RECIEVED", agentId)
     agentSip = "sip:%s@phone.plivo.com" % agentId
     plivo_response = plivo.addDial().addUser(agentSip)
     return make_http_response(plivo_response)
@@ -97,6 +101,7 @@ def response_sip_route():
             print("Assigning call")
             plivo_response.addDial(callerName=caller_name).addUser(agentSip)
         else:
+            print ("INSERTING", callUUID)
             addPendingCall(callUUID)
             plivo_response.addPlay(music_file, loop=0)
         return make_http_response(plivo_response)

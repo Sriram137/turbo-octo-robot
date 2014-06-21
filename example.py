@@ -63,45 +63,48 @@ def makeAgentAvailable(agentId):
 
 @app.route('/response/sip/route/', methods=['POST'])
 def response_sip_route():
-    print(request)
-    print(request.form)
-    print("OVER")
-    if request.method == 'POST':
-        from_number = request.form.get('CLID', None)
-        if from_number is None:
-            from_number = request.form.get('From', '')
-        caller_name = request.form.get('CallerName', '')
-        callUUID = request.form.get('CallUUID', '')
-    else:
-        return make_response('Method not allowed.')
+    try:
+        print(request)
+        print(request.form)
+        print("OVER")
+        if request.method == 'POST':
+            from_number = request.form.get('CLID', None)
+            if from_number is None:
+                from_number = request.form.get('From', '')
+            caller_name = request.form.get('CallerName', '')
+            callUUID = request.form.get('CallUUID', '')
+        else:
+            return make_response('Method not allowed.')
 
-    plivo_response = plivo.XML.Response()
+        plivo_response = plivo.XML.Response()
 
-    agentId = getFreeAgent()
+        agentId = getFreeAgent()
 
-    print("Agent Id", agentId)
-    if agentId is not None:
-        agentSip = "sip:%s@phone.plivo.com" % agentId
-        print ("agentSip", agentSip)
-        # assignCall(callUUID, agentId)
-        print("Assigning call")
-        plivo_response.addDial(caller_name=caller_name).addUser(agentSip)
-    else:
-        addPendingCall(callUUID)
-        plivo_response.addPlay(music_file, {"loop": 0})
+        print("Agent Id", agentId)
+        if agentId is not None:
+            agentSip = "sip:%s@phone.plivo.com" % agentId
+            print ("agentSip", agentSip)
+            # assignCall(callUUID, agentId)
+            print("Assigning call")
+            plivo_response.addDial(caller_name=caller_name).addUser(agentSip)
+        else:
+            addPendingCall(callUUID)
+            plivo_response.addPlay(music_file, {"loop": 0})
 
-    print(plivo_response.to_xml())
-    response = make_response(plivo_response.to_xml())
-    response.headers['Content-Type'] = 'text/xml'
+        print(plivo_response.to_xml())
+        response = make_response(plivo_response.to_xml())
+        response.headers['Content-Type'] = 'text/xml'
 
-    return response
+        return response
+    except Exception as e:
+        print e
 
 
 @app.route('/response/sip/hangup/', methods=['POST'])
 def response_sip_hangup():
-    print(request)
-    print(request.form)
-    print("HANGUP")
+    # print(request)
+    # print(request.form)
+    # print("HANGUP")
     if request.method == 'POST':
         from_number = request.form.get('CLID', None)
         if from_number is None:

@@ -4,8 +4,9 @@ import os
 import redis
 
 
-g = g
 app = Flask(__name__)
+
+music_file = "https://s3.amazonaws.com/plivocloud/Trumpet.mp3"
 
 
 def get_db():
@@ -25,8 +26,39 @@ def connect_db():
 def index():
     return render_template("web_taker.html")
 
+
 def getFreeAgent():
-    return g.redis_server
+    return g.redis_server.spop("agentPool")
+
+
+def addAvailableAgent(agentId):
+    g.redis_server.sadd("agentPool", agentId)
+
+
+def getPendingCall(callId):
+    return g.redis_server.lpop("callList")
+
+
+def addPendingCall(callId):
+    g.redis_server.rpush("callList", callId)
+
+
+def assignCall(callId, agentId):
+    g.redis_server.set(callId, agentId)
+
+
+# def getAgentIdForCall(callId):
+#     return g.redis_server.get(callId)
+
+
+# def deleteCallDetails(callId):
+#     g.redis_server.delete(callId)
+
+
+@app.route('/agent/<agentId>')
+def makeAgentAvailable(agentId):
+    addAvailableAgent(agentId)
+    return
 
 
 @app.route('/response/sip/route/', methods=['POST'])
@@ -43,24 +75,41 @@ def response_sip_route():
     else:
         return make_response('Method not allowed.')
 
-    response = plivo.XML.Response()
+    plivo_response = plivo.XML.Response()
 
-    to_number = "sip:elricl140620163139@phone.plivo.com"
-    print("4 level")
-    if not to_number:
-        response.addHangup()
+    agentId = getFreeAgent()
+
+    if agentId:
+        agentSip = "sip:%s@phone.plivo.com" % agentId
+        # assignCall(callUUID, agentId)
+        plivo_response.addDial(caller_name=caller_name).addUser(agentSip)
     else:
-        response.addDial(callerName=caller_name).addUser(to_number)
-        # if to_number[:4] == 'sip:':
-            # response.addDial().addUser(to_number)
-        # else:
-            # response.addDial().addNumber(to_number)
+        addPendingCall(callUUID)
+        plivo_response.addPlay(music_file, {"loop": 0})
 
-    print(response.to_xml())
-    response = make_response(response.to_xml())
+    print(plivo_response.to_xml())
+    response = make_response(plivo_response.to_xml())
     response.headers['Content-Type'] = 'text/xml'
 
     return response
+
+
+@app.route('/response/sip/hangup/', methods=['POST'])
+def response_sip_hangup():
+    print(request)
+    print(request.form)
+    print("HANGUP")
+    if request.method == 'POST':
+        from_number = request.form.get('CLID', None)
+        if from_number is None:
+            from_number = request.form.get('From', '')
+        #callUUID = request.form.get('CallUUID', '')
+    else:
+        return make_response('Method not allowed.')
+
+    #agentId = getAgentIdForCall(callUUID)
+    #deleteCallDetails(callId)
+    return
 
 if __name__ == '__main__':
     app.debug = True

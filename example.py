@@ -28,10 +28,13 @@ def response_sip_route():
             from_number = request.form.get('From', '')
         # caller_name = request.form.get('CallerName', '')
     else:
+        print("Leaving")
         return make_response('Method not allowed.')
 
+    print("Second level")
     response = plivo.Response()
     to_number = "sip:elricl140620163139@phone.plivo.com"
+    print("third level")
     if not to_number:
         response.addHangup()
     else:

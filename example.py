@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, render_template
+from flask import Flask, request, make_response, render_template, g
 import plivo
 import os
 import redis
@@ -10,7 +10,7 @@ music_file = "https://s3.amazonaws.com/plivocloud/Trumpet.mp3"
 
 
 def get_db():
-    if hasattr(g, 'redis_server'):
+    if not hasattr(g, 'redis_server'):
         g.redis_server = connect_db()
     return g.redis_server
 
@@ -28,23 +28,23 @@ def index():
 
 
 def getFreeAgent():
-    return g.redis_server.spop("agentPool")
+    return get_db().spop("agentPool")
 
 
 def addAvailableAgent(agentId):
-    g.redis_server.sadd("agentPool", agentId)
+    get_db().sadd("agentPool", agentId)
 
 
 def getPendingCall(callId):
-    return g.redis_server.lpop("callList")
+    return get_db().lpop("callList")
 
 
 def addPendingCall(callId):
-    g.redis_server.rpush("callList", callId)
+    get_db().rpush("callList", callId)
 
 
 def assignCall(callId, agentId):
-    g.redis_server.set(callId, agentId)
+    get_db().set(callId, agentId)
 
 
 # def getAgentIdForCall(callId):
@@ -58,7 +58,7 @@ def assignCall(callId, agentId):
 @app.route('/agent/<agentId>')
 def makeAgentAvailable(agentId):
     addAvailableAgent(agentId)
-    return
+    return ""
 
 
 @app.route('/response/sip/route/', methods=['POST'])

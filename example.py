@@ -1,41 +1,50 @@
 from flask import Flask, request, make_response, render_template
 import plivo
+import os
+import redis
 
+
+g = g
 app = Flask(__name__)
+
+
+def get_db():
+    if hasattr(g, 'redis_server'):
+        g.redis_server = connect_db()
+    return g.redis_server
+
+
+def connect_db():
+    """Connects to the specific database."""
+    redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
+    redis_server = redis.from_url(redis_url)
+    return redis_server
 
 
 @app.route('/')
 def index():
     return render_template("web_taker.html")
 
+def getFreeAgent():
+    return g.redis_server
 
-@app.route('/response/sip/route/', methods=['GET', 'POST'])
+
+@app.route('/response/sip/route/', methods=['POST'])
 def response_sip_route():
-    print(request.args)
     print(request)
-    print(request.method)
     print(request.form)
     print("OVER")
-    if request.method == 'GET':
-        to_number = request.args.get('To', None)
-        from_number = request.args.get('CLID', None)
-        if from_number is None:
-            from_number = request.args.get('From', '')
-        caller_name = request.args.get('CallerName', '')
-    elif request.method == 'POST':
-        to_number = request.form.get('To', None)
+    if request.method == 'POST':
         from_number = request.form.get('CLID', None)
         if from_number is None:
             from_number = request.form.get('From', '')
         caller_name = request.form.get('CallerName', '')
-        print("ZXCV")
+        callUUID = request.form.get('CallUUID', '')
     else:
-        print("Leaving")
         return make_response('Method not allowed.')
 
-    print("Second level")
     response = plivo.XML.Response()
-    print("third level")
+
     to_number = "sip:elricl140620163139@phone.plivo.com"
     print("4 level")
     if not to_number:

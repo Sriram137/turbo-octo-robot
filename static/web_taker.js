@@ -23,6 +23,7 @@ $(document).ready(function() {
     function onIncomingCall(callerName, extraHeaders) {
         console.log("call recieved", extraHeaders);
         console.log(callerName);
+        Plivo.conn.answer()
     }
 
     Plivo.onLogin = onLogin;

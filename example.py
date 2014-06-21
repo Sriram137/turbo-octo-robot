@@ -86,11 +86,10 @@ def response_sip_route():
             print ("agentSip", agentSip)
             # assignCall(callUUID, agentId)
             print("Assigning call")
-            plivo_response.addDial(caller_name=caller_name).addUser(agentSip)
+            plivo_response.addDial(callerName=caller_name).addUser(agentSip)
         else:
             addPendingCall(callUUID)
-            plivo_response.addPlay(music_file, {"loop": 0})
-
+            plivo_response.addPlay(music_file, loop=0)
         print(plivo_response.to_xml())
         response = make_response(plivo_response.to_xml())
         response.headers['Content-Type'] = 'text/xml'

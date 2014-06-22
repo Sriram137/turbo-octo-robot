@@ -5,6 +5,7 @@ import redis
 
 
 app = Flask(__name__)
+app.debug = True
 auth_id = "MAN2QYMDI4NGJKOTFMNG"
 auth_token = "MjQ5ZjI1NDZjM2JiYjU2MGMyNDc4MmEzZWY4MzM3"
 music_file = "https://s3.amazonaws.com/plivocloud/Trumpet.mp3"
@@ -122,23 +123,10 @@ def make_http_response(plivo_response):
     return response
 
 
-@app.route('/response/sip/hangup/', methods=['POST'])
-def response_sip_hangup():
-    # print(request)
-    # print(request.form)
-    # print("HANGUP")
-    if request.method == 'POST':
-        from_number = request.form.get('CLID', None)
-        if from_number is None:
-            from_number = request.form.get('From', '')
-        #callUUID = request.form.get('CallUUID', '')
-    else:
-        return make_response('Method not allowed.')
-
-    #agentId = getAgentIdForCall(callUUID)
-    #deleteCallDetails(callId)
-    return ""
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    return render_template("web_taker.html")
 
 if __name__ == '__main__':
-    app.debug = True
     app.run(host='0.0.0.0')

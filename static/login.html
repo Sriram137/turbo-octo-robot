@@ -1,0 +1,14 @@
+<form role="form">
+    <span ng-show="login_failed">
+        <div class="alert alert-danger alert-dismissable">Login Failed</div>
+    </span>
+    <div class="form-group">
+        <label for="exampleInputEmail1">SIP Address:</label>
+        <input class="form-control" ng-model="sip" id="exampleInputEmail1" placeholder="Enter sipId">
+    </div>
+    <div class="form-group">
+        <label for="pass">Password:</label>
+        <input type="password" class="form-control" ng-model="pass" id="pass" placeholder="Password">
+    </div>
+    <button ng-click="sipLogin()" class="btn btn-default">Submit</button>
+</form>

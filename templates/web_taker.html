@@ -27,9 +27,15 @@
             </div>
             <!-- /.container-fluid -->
         </nav>
-        <div ng-controller="mainCtrl">
+        <div class="container">
+            <div class="row col-xs-9">
+                <div ng-view></div>
+            </div>
+            <div ng-controller="mainCtrl">
+                Number of calls waiting in queue :
+                <span ng-bind="no_calls_waiting"></span>
+            </div>
         </div>
-        <div ng-view></div>
     </div>
     <script type="text/javascript" src="static/web_taker.js"></script>
 </body>

@@ -4,10 +4,6 @@ $(document).ready(function() {
     Plivo.init();
     Plivo.setDebug(true);
 
-    var username = 'elricl140620163139';
-    var pass = 'theoracle';
-    //Plivo.conn.login(username, pass);
-
     function webrtcNotSupportedAlert() {
         console.log("NOT SUPPORTED");
     }
@@ -16,11 +12,6 @@ $(document).ready(function() {
         console.log("READY");
     }
 
-    function onIncomingCall(callerName, extraHeaders) {
-        console.log("call recieved", extraHeaders);
-        console.log(callerName);
-        Plivo.conn.answer()
-    }
 });
 
 var scotchApp = angular.module('RringoApp', ['ngRoute', 'ngAnimate']);
@@ -42,11 +33,17 @@ scotchApp.config(['$routeProvider', '$locationProvider',
     }
 ]);
 
-scotchApp.controller('mainCtrl', ['$route', '$routeParams', '$location',
-    function($route, $routeParams, $location) {
+scotchApp.controller('mainCtrl', ['$scope', '$route', '$routeParams', '$location', '$interval', '$http',
+    function($scope, $route, $routeParams, $location, $interval, $http) {
         this.$route = $route;
         this.$routeParams = $routeParams;
         this.$location = $location;
+        $scope.no_calls_waiting = 0;
+        $interval(function() {
+            $http.get("/calls_waiting/count/").success(function(data) {
+                $scope.no_calls_waiting = data;
+            });
+        }, 5000);
     }
 ]);
 
@@ -75,8 +72,8 @@ scotchApp.controller('loginCtrl', ['$scope', '$routeParams', '$location',
     }
 ]);
 
-scotchApp.controller('callCtrl', ['$scope', '$routeParams', '$http',
-    function($scope, $routeParams, $http) {
+scotchApp.controller('callCtrl', ['$scope', '$routeParams', '$http', '$location', '$timeout',
+    function($scope, $routeParams, $http, $location, $timeout) {
         this.name = "callCtrl";
         this.params = $routeParams;
         $scope.answerButtonEnabled = false;
@@ -98,20 +95,34 @@ scotchApp.controller('callCtrl', ['$scope', '$routeParams', '$http',
                 $scope.answerButtonEnabled = true;
                 $scope.readyToTakeCall = false;
             });
+
         }
-        Plivo.onIncomingCallFailed = function() {
-            $scope.$apply(function() {
-                $scope.agentBusy = false;
-                $scope.message = "Call over. Press Ready button to get more calls."
-                $scope.answerButtonEnabled = false;
-            });
-        }
-        Plivo.onCallEnded = Plivo.onIncomingCallFailed;
         $scope.answerCall = function() {
             $scope.agentBusy = true;
             Plivo.conn.answer();
             $scope.answerButtonEnabled = false;
             $scope.message = "Wait for message";
+        }
+        Plivo.onIncomingCallFailed = function() {
+            $scope.$apply(function() {
+                console.log("KICK");
+                $scope.agentBusy = false;
+                $scope.message = "Call over. Press Ready button to get more calls."
+                $scope.answerButtonEnabled = false;
+            });
+        }
+        $scope.hangUP = function() {
+            $timeout(function() {
+                Plivo.conn.hangup();
+            }, 0);
+        }
+        Plivo.onCallTerminated = Plivo.onIncomingCallFailed;
+        Plivo.onCallEnded = Plivo.onIncomingCallFailed;
+        $scope.logout = function() {
+            Plivo.conn.hangup();
+            Plivo.conn.logout();
+            Plivo["connected"] = false;
+            $location.path("/login");
         }
     }
 ]);

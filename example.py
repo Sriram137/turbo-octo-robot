@@ -40,16 +40,26 @@ def addAvailableAgent(agentId):
 
 
 def getPendingCall():
-    return get_db().lpop("callList")
+    return get_db().spop("callList")
 
 
 def addPendingCall(callId):
     print ("INSERTINGcccc", callId)
-    get_db().rpush("callList", callId)
+    get_db().sadd("callList", callId)
 
 
-def assignCall(callId, agentId):
-    get_db().set(callId, agentId)
+def removeCallFromQueue(callId):
+    get_db().srem("callList", callId)
+
+
+def getCallCountFromDb():
+    return get_db().scard("callList")
+
+
+@app.route('/calls_waiting/count/')
+def callCount():
+    print getCallCountFromDb()
+    return str(getCallCountFromDb())
 
 
 @app.route('/agent/<agentId>')
@@ -113,6 +123,12 @@ def response_sip_route():
 
     except Exception as e:
         print e
+
+
+@app.route('/response/sip/hangup/', methods=['POST'])
+def response_sip_hangup():
+    callUUID = request.form.get('CallUUID', '')
+    removeCallFromQueue(callUUID)
 
 
 def make_http_response(plivo_response):
